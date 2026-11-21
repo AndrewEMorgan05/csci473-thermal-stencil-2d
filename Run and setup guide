@@ -1,0 +1,117 @@
+WSL (Ubuntu) Setup & Run Guide — CSCI 473 Thermal Stencil 2D
+
+This guide walks through setting up WSL: Ubuntu on Windows, cloning our repository, installing the required C/OpenMP/MPI build tools, and compiling/running the 2D thermal simulation.
+
+1. Install or Open WSL (Ubuntu) on Windows
+
+Open PowerShell or Windows Terminal (as Administrator if WSL isn't installed yet).
+
+If you do not have Ubuntu installed yet, run:
+
+wsl --install -d Ubuntu
+
+
+(Restart your computer if prompted, then launch Ubuntu from the Start menu and create your Linux username and password.)
+
+If WSL: Ubuntu is already installed, launch Ubuntu from the Start menu (or connect in VS Code by clicking the blue >< icon in the bottom-left corner and selecting Connect to WSL).
+
+2. Install Required Compilers & Tools in Ubuntu
+
+Inside your Ubuntu terminal, update your package list and install gcc, make, git, and OpenMPI (mpicc / mpirun):
+
+sudo apt update
+sudo apt install -y build-essential git openmpi-bin libopenmpi-dev
+
+
+Verify everything is installed properly:
+
+gcc --version
+mpicc --version
+nproc
+
+
+(Note: nproc shows how many logical processors your machine has so you can keep worker counts within safe hardware limits without oversubscribing.)
+
+3. Clone the Repository
+
+Navigate to a Linux home directory (recommended for fast I/O, e.g., ~/projects) or your workspace folder and clone the repo:
+
+mkdir -p ~/projects
+cd ~/projects
+git clone https://github.com/AndrewEMorgan05/csci473-thermal-stencil-2d.git
+cd csci473-thermal-stencil-2d
+
+
+(If VS Code is connected to WSL, you can open this folder directly with code . from the terminal.)
+
+4. Compile & Run the Current Baseline (make-2d, print-2d, stencil-2d)
+
+Move into the code/ folder and compile:
+
+cd code
+make
+
+
+(If you ever get a carriage-return error from Windows line endings, run sed -i 's/\r$//' Makefile *.c *.h and then make.)
+
+Ensure the data/ directory exists and run a quick 5x5 test:
+
+mkdir -p ../data
+./make-2d 5 5 ../data/init_5x5.dat
+./print-2d ../data/init_5x5.dat
+./stencil-2d -t 5 -i ../data/init_5x5.dat -o ../data/out_5x5.dat -v 2
+
+
+Run a 16x16 test:
+
+./make-2d 16 16 ../data/init_16x16.dat
+./stencil-2d -t 20 -i ../data/init_16x16.dat -o ../data/out_16x16.dat -v 1
+
+
+CLI Flag Reference
+
+-t <num_iters> (or -n <num_iters>): Number of stencil iterations/time steps
+
+-i <input_file>: Input binary .dat grid file
+
+-o <output_file>: Output binary .dat grid file
+
+-v <0|1|2>: Verbosity (0 = silent/errors only, 1 = basic info & timings, 2 = print grid at every iteration)
+
+-p <workers>: Number of workers/threads (used in parallel versions)
+
+5. Compiling & Running Parallel Versions (As We Add Them)
+
+Pthreads (stencil-2d-pth.c): Compile with -pthread and run:
+
+./stencil-2d-pth -t 100 -i ../data/init_512.dat -o ../data/out_512_pth.dat -p 4 -v 1
+
+
+OpenMP (stencil-2d-omp.c): Compile with -fopenmp and run:
+
+./stencil-2d-omp -t 100 -i ../data/init_512.dat -o ../data/out_512_omp.dat -p 4 -v 1
+
+
+MPI (stencil-2d-mpi.c): Compile with mpicc and launch via mpirun:
+
+mpirun -np 4 ./stencil-2d-mpi -t 100 -i ../data/init_512.dat -o ../data/out_512_mpi.dat -v 1
+
+
+Hybrid MPI + OpenMP (stencil-2d-hybrid.c): Compile with mpicc -fopenmp and combine OMP_NUM_THREADS with mpirun -np:
+
+OMP_NUM_THREADS=2 mpirun -np 2 ./stencil-2d-hybrid -t 100 -i ../data/init_512.dat -o ../data/out_512_hyb.dat -v 1
+
+
+6. Daily Git Sync Workflow
+
+Before editing files each day, pull the latest commits:
+
+git pull
+
+
+When you are ready to share updates:
+
+git status
+git add .
+git commit -m "Describe your update"
+git push

@@ -1,0 +1,10 @@
+*.o
+core*
+code/make-2d
+code/print-2d
+code/stencil-2d
+code/stencil-2d-pth
+code/stencil-2d-omp
+code/stencil-2d-mpi
+code/stencil-2d-hybrid
+data/*.dat
