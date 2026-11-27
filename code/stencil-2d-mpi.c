@@ -41,14 +41,26 @@ int main(int argc, char **argv) {
         b[IDX(i,0,cols)]=a[IDX(i,0,cols)];
         b[IDX(i,cols-1,cols)]=a[IDX(i,cols-1,cols)];
     }
-    if(rank==0) {
-        memcpy(a,global,(size_t)cols*sizeof(double));
-        memcpy(b,a,(size_t)cols*sizeof(double));
+    double *top_row = malloc((size_t)cols * sizeof(double));
+    double *bot_row = malloc((size_t)cols * sizeof(double));
+    if (!top_row || !bot_row) MPI_Abort(MPI_COMM_WORLD, 2);
+    if (rank == 0) {
+        memcpy(top_row, global, (size_t)cols * sizeof(double));
+        memcpy(bot_row, global + (size_t)(rows - 1) * cols, (size_t)cols * sizeof(double));
     }
-    if(rank==size-1) {
-        memcpy(a+(size_t)(localrows+1)*cols,global+(size_t)(rows-1)*cols,(size_t)cols*sizeof(double));
-        memcpy(b+(size_t)(localrows+1)*cols,a+(size_t)(localrows+1)*cols,(size_t)cols*sizeof(double));
+    MPI_Bcast(top_row, cols, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(bot_row, cols, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    if (rank == 0) {
+        memcpy(a, top_row, (size_t)cols * sizeof(double));
+        memcpy(b, top_row, (size_t)cols * sizeof(double));
     }
+    if (rank == size - 1) {
+        memcpy(a + (size_t)(localrows + 1) * cols, bot_row, (size_t)cols * sizeof(double));
+        memcpy(b + (size_t)(localrows + 1) * cols, bot_row, (size_t)cols * sizeof(double));
+    }
+    free(top_row);
+    free(bot_row);
     MPI_Barrier(MPI_COMM_WORLD);
     double cs=MPI_Wtime();
     for(int t=0;t<cfg.iterations;t++) {
