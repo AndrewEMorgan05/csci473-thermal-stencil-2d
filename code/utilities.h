@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 /* Quinn Block Decomposition Macros (1D partitioning of n items across p workers) */
 #define BLOCK_LOW(id, p, n)   ((id) * (n) / (p))
@@ -27,6 +28,8 @@ void free_grid(double *grid);
 int read_grid_file(const char *filename, int *rows, int *cols, double **grid);
 int write_grid_file(const char *filename, int rows, int cols, const double *grid);
 void print_grid_formatted(const double *grid, int rows, int cols);
+
+double elapsed_seconds(const struct timespec *start, const struct timespec *end);
 
 double get_wall_time(void);
 int parse_stencil_args(int argc, char **argv, StencilConfig *cfg, int require_workers);

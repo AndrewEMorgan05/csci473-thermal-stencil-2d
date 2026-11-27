@@ -90,6 +90,12 @@ void print_grid_formatted(const double *grid, int rows, int cols) {
     }
 }
 
+double elapsed_seconds(const struct timespec *start, const struct timespec *end) {
+    double sec = (double)(end->tv_sec - start->tv_sec);
+    double nsec = (double)(end->tv_nsec - start->tv_nsec) / 1e9;
+    return sec + nsec;
+}
+
 double get_wall_time(void) {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
